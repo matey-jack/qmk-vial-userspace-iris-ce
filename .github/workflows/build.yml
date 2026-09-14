@@ -4,7 +4,7 @@ on:
   push:
   workflow_dispatch:
 
-# Needed by the release job; the build job declares its own.
+# Default to read-only; the jobs below grant themselves what they need.
 permissions:
   contents: read
 
@@ -20,6 +20,12 @@ jobs:
   # branch, which is what we want for non-main pushes.
   build:
     name: Build
+    # qmk_userspace_build.yml declares `permissions: contents: write`. A called
+    # workflow can never hold more than the calling job grants it, and anything
+    # the caller omits is "none" -- so without this the whole run is rejected
+    # before any job starts (conclusion: startup_failure).
+    permissions:
+      contents: write
     uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
     with:
       qmk_repo: vial-kb/vial-qmk
