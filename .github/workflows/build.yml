@@ -1,0 +1,88 @@
+name: Build Vial firmware
+
+on:
+  push:
+  workflow_dispatch:
+
+# Needed by the release job; the build job declares its own.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Reuses QMK's own userspace build workflow, pointed at vial-qmk instead of
+  # qmk_firmware. It checks out both repos, installs the CLI dependencies,
+  # runs `qmk userspace-compile` over the targets in qmk.json, and uploads the
+  # resulting binaries as a workflow artifact named "Firmware" -- on every
+  # branch, which is what we want for non-main pushes.
+  build:
+    name: Build
+    uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
+    with:
+      qmk_repo: vial-kb/vial-qmk
+      qmk_ref: vial
+
+  # Only pushes/merges to main turn into a release.
+  release:
+    name: Release
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+
+      - name: Download firmware
+        uses: actions/download-artifact@v8
+        with:
+          name: Firmware
+          path: firmware
+
+      # Releases are named after the build date. A second build on the same day
+      # gets a ".2" suffix, a third ".3", and so on.
+      - name: Pick release tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          base="$(date -u +'%Y.%m.%d')"
+          tag="$base"
+          n=1
+          while git rev-parse -q --verify "refs/tags/$tag" >/dev/null \
+             || gh release view "$tag" >/dev/null 2>&1; do
+            n=$((n + 1))
+            tag="$base.$n"
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Releasing as $tag"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          token: ${{ github.token }}
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          body: |
+            Vial firmware for `keebio/iris_ce/rev1`, built from
+            ${{ github.repository }}@${{ github.sha }}
+            against [vial-kb/vial-qmk@vial](https://github.com/vial-kb/vial-qmk/tree/vial).
+
+            Flash the `.uf2` by putting the board into bootloader mode and
+            copying the file onto the `RPI-RP2` drive that appears.
+          files: |
+            firmware/**/*.uf2
+            firmware/**/*.hex
+            firmware/**/*.bin
