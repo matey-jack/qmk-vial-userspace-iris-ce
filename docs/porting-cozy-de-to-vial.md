@@ -22,15 +22,19 @@ Terms used below:
 
 ## 0. Verdict up front
 
-Vial can carry this keymap, but not unchanged. Four things need a decision before any code is
-written, and one of them (§2.1) silently changes behaviour rather than failing to compile.
+Vial can carry this keymap, but not unchanged. Four things need work, and one of them (§2.1)
+silently changes behaviour rather than failing to compile.
 
 | | |
 |---|---|
 | Ports as-is | layer structure, all four layers, `LT`/`OSL`/`TO`/`OSM`, Caps Word, the German keycodes, the accent macros, `process_record_user`, RGB Matrix, split-halves layer sync |
 | Needs a small code change | one-shot modifier aliases `OS_LSFT` … (§2.4), custom keycode numbering (§2.3) |
-| Needs a design decision | key overrides (§2.1), `PERMISSIVE_HOLD` (§2.2) |
+| Needs provisioning after each flash | key overrides (§2.1), `PERMISSIVE_HOLD` (§2.2) — scriptable, see §6 |
 | Does not port | nothing |
+
+Both of the open questions from the first draft are now settled: the keymap is a **hard fork**
+(§5), and the two "needs a decision" items are handled by a **provisioning script** built on the
+`vitaly` Vial CLI rather than by firmware code (§6).
 
 ## 1. What was checked, and how
 
@@ -98,7 +102,7 @@ maximum of 32 entries each for tap dance, combos, key overrides and alt-repeat. 
 So five layers are not a problem. (Layout per
 [`nvm_dynamic_keymap.c`](https://github.com/vial-kb/vial-qmk/blob/dd43959/quantum/nvm/eeprom/nvm_dynamic_keymap.c).)
 
-## 2. The four things that need a decision
+## 2. The four things that need work
 
 ### 2.1 Key overrides: the static `key_overrides[]` array is silently ignored
 
@@ -126,26 +130,24 @@ it fills all 32 key-override slots with a zeroed, disabled entry.
 
 Net effect of a naive port: the keymap looks right in Vial, and `Shift+9` types `)`.
 
-Three ways out, in order of preference:
+The good news is that all nine are *representable* in Vial's world. Its on-disk override record
+([`vial_key_override_entry_t`](https://github.com/vial-kb/vial-qmk/blob/dd43959/quantum/vial.h))
+carries trigger, replacement, layers, trigger mods, negative mask, suppressed mods and options —
+including `ko_option_one_mod` — so **`ko_adia_tab` with its `suppressed_mods = 0` trick survives
+too**. Only `custom_action`/`context` are lost, and this keymap does not use them.
 
-1. **Seed the overrides from firmware.** Keep the nine overrides as data in `keymap.c`, and in
-   `keyboard_post_init_user()` write them into EEPROM with `dynamic_keymap_set_key_override()`,
-   then call `vial_init()` to reload Vial's RAM copy. Guard it with a sentinel (slot 0 still at its
-   zeroed reset value ⇒ the EEPROM was just wiped ⇒ re-seed), so a user who edits overrides in the
-   GUI is not overwritten on every boot. Vial's on-disk override record
-   ([`vial_key_override_entry_t`](https://github.com/vial-kb/vial-qmk/blob/dd43959/quantum/vial.h))
-   carries trigger, replacement, layers, trigger mods, negative mask, suppressed mods and options —
-   including `ko_option_one_mod` — so **all nine overrides are representable, `ko_adia_tab` with
-   its `suppressed_mods = 0` trick included**. The only fields lost are `custom_action`/`context`,
-   which this keymap does not use.
-   Cost: ~40 lines of new code, in a keymap whose stated goal was to have none.
-2. **Move the Shift mapping into `process_record_user()`.** Honest, GUI-invisible, and it
-   re-introduces exactly the custom code the `cozy_de` rewrite set out to delete.
-3. **Enter the nine overrides by hand in the Vial GUI, once, and keep a `.vil` layout file in the
-   repo** to re-load them after each flash. Zero code. But see §2.5: *every* firmware flash wipes
-   them, so this is a manual step on every single update.
+Three ways out:
 
-Recommendation: **(1)**, with the `.vil` file from (3) kept as a convenience export.
+1. **Provision them from a script after each flash** — a `.vil` file in the repo, applied with the
+   `vitaly` CLI. Zero firmware code, and §6 shows it needs no manual unlock for this particular
+   keymap. **Chosen.**
+2. **Seed them from firmware**: keep the nine overrides as data in `keymap.c` and write them into
+   EEPROM from `keyboard_post_init_user()` with `dynamic_keymap_set_key_override()`, then call
+   `vial_init()` to reload Vial's RAM copy, guarded by a sentinel so a GUI edit is not stomped on
+   every boot. ~40 lines, in a keymap whose stated goal was to have none. Keep in reserve: it is
+   the answer if the script turns out to be a nuisance in practice.
+3. **Move the Shift mapping into `process_record_user()`.** Honest, GUI-invisible, and it
+   re-introduces exactly the custom code the `cozy_de` rewrite set out to delete. Rejected.
 
 ### 2.2 `PERMISSIVE_HOLD` is ignored; `TAPPING_TERM` is not
 
@@ -166,16 +168,22 @@ permissive hold to make them usable at a 500 ms tapping term, losing it is not a
 
 Options:
 
-1. **`QMK_SETTINGS = no` in `rules.mk`.** `build_vial.mk` uses `?=`, and `common_features.mk:647`
-   includes it *after* the keymap's `rules.mk`, so the keymap can veto it (confirmed). The
-   `QS_*` macros then fall back to the compile-time `#define`s and `config.h` behaves exactly as
-   it does today. Cost: no QMK Settings tab in the Vial GUI, and Auto Shift / layer lock /
-   alt-repeat stop being runtime-configurable.
-2. **Keep QMK Settings and tick "Permissive Hold" in the GUI** — and re-tick it after every flash
-   (§2.5), or seed the bit from firmware the same way as §2.1.
+1. **Keep QMK Settings and set the bit from the provisioning script**: `vitaly settings -q 22 -v
+   true`. Setting 22 is Permissive Hold — the `vitaly` setting IDs line up exactly with the
+   `DECLARE_STATIC_BITSETTING(22, tapping_v2, …)` in `qmk_settings.c`. The Vial GUI keeps its
+   QMK Settings tab. **Chosen**, see §6.
+2. **`QMK_SETTINGS = no` in `rules.mk`.** `build_vial.mk` uses `?=`, and `common_features.mk:647`
+   includes it *after* the keymap's `rules.mk`, so the keymap can veto it (confirmed). The `QS_*`
+   macros then fall back to the compile-time `#define`s and `config.h` behaves exactly as it does
+   today — no script needed for this one. Cost: no QMK Settings tab in the Vial GUI at all, and
+   Auto Shift / one-shot timeouts / mouse-key speeds stop being runtime-tunable.
 
-Recommendation: **(1)** if the point of the port is a Vial *keymap editor*; **(2)** if the point is
-the full Vial settings experience. This is the main open question for you.
+Recommendation: **(1)**, because the whole point of the port is to get the Vial GUI. (2) stays the
+fallback if the settings keep getting lost in practice.
+
+One catch that decides the shape of §6: **`.vil` files do not carry QMK Settings.** `vitaly load`
+restores macros, key overrides, alt-repeat keys, combos, tap dances and keys — settings are a
+separate subcommand. So the provisioning script needs both halves.
 
 ### 2.3 Custom keycodes must start at `QK_KB_0`, not `SAFE_RANGE`
 
@@ -217,8 +225,9 @@ This is a hard compile error, and the fix is three lines of comment and eight of
 The `#ifndef` guard means the same file keeps compiling if `vial-qmk` later rebases past that QMK
 version.
 
-This one is worth treating as a *class* of problem, not a single bug: **`vial-qmk` is roughly a
-year of QMK behind the `cozy` userspace**, so the two keymaps will drift. See §5.
+This is one instance of a *class* of problem: **`vial-qmk` is roughly a year of QMK behind the
+`cozy` userspace**, so anything QMK added after 0.29.0 is missing here. The hard-fork decision in
+§5 is what keeps that from becoming an ongoing tax.
 
 ### 2.5 Every flash wipes the EEPROM (this cuts both ways)
 
@@ -289,97 +298,174 @@ is guarded by `NO_PRINT` (`print.h:51,74`). So `MX_VERS` keeps working with `CON
 
 ## 4. Repository and build plan
 
-### 4.1 Layout
+Since the first draft of this document, `main` has grown the scaffolding and a working build:
+`qmk.json`, the passthrough `Makefile`, and `.github/workflows/build.yml`, which reuses
+[`qmk/.github/.github/workflows/qmk_userspace_build.yml@main`](https://github.com/qmk/.github/blob/main/.github/workflows/qmk_userspace_build.yml)
+pointed at `vial-kb/vial-qmk` branch `vial`, plus a date-tagged release job on `main`.
 
-Mirror the source userspace, so the two stay diff-able:
+That settles the two things this section previously listed as "verify on the first run": the
+reusable workflow does check out `vial-qmk` usably for an RP2040 build, and `vial-qmk`'s
+`requirements.txt` installs in the `qmk_cli` container. The build is green on `main` and was also
+reproduced locally, producing a 295-block RP2040 `.uf2`. **Step 2 of the old plan — "get a Vial
+build green before porting anything" — is done**, against the stock `vial` keymap.
+
+One constraint worth repeating from the ReadMe: `vial-qmk`'s userspace schema only accepts the
+tuple form `["keyboard", "keymap"]` in `qmk.json`. The object form current upstream QMK also takes
+is rejected here.
+
+### 4.1 What the port adds
 
 ```
-qmk.json                                     userspace_version 1.1, build target keebio/iris_ce/rev1 : cozy_de
-Makefile                                     same passthrough Makefile as the cozy userspace
+qmk.json                                     build target: "vial" -> "cozy_de"
 keyboards/keebio/iris_ce/keymaps/cozy_de/
-    keymap.c                                 ported from the source keymap
-    config.h                                 ported, plus Vial UID and unlock combo
-    rules.mk                                 ported, plus VIA_ENABLE / VIAL_ENABLE / VIALRGB_ENABLE
-    vial.json                                copied from vial-qmk's iris_ce vial keymap + customKeycodes
-    cozy_de.vil                              optional: exported Vial layout, for re-import after a flash
-.github/workflows/build-on-push.yaml         adapted from the source repo
-docs/porting-cozy-de-to-vial.md              this file
+    keymap.c                                 forked from the source keymap
+    config.h                                 forked, plus Vial UID and unlock combo
+    rules.mk                                 forked, plus VIA_ENABLE / VIAL_ENABLE / VIALRGB_ENABLE
+    vial.json                                from vial-qmk's iris_ce vial keymap + customKeycodes
+tools/
+    cozy_de.vil                              the Vial-side config: key overrides et al (§6)
+    provision.sh                             applies the .vil and the QMK Settings after a flash (§6)
 ```
 
-`vial-qmk` supports external userspaces: `QMK_USERSPACE` is handled in its `Makefile` and
-`build_keyboard.mk:155-177`, `lib/python/qmk/cli/userspace/` provides `qmk userspace-compile`, and
-`data/schemas/user_repo_v1_1.jsonschema` matches the `"userspace_version": "1.1"` the source repo
-uses. `build_vial.mk` reads `$(KEYMAP_PATH)/vial.json`, and `KEYMAP_PATH` resolves into the
-userspace, so `vial.json` belongs in the keymap directory here (confirmed).
+`build_vial.mk` reads `$(KEYMAP_PATH)/vial.json`, and `KEYMAP_PATH` resolves into the userspace
+(`build_keyboard.mk:155-177`), so `vial.json` belongs in the keymap directory here — confirmed,
+not assumed.
 
-### 4.2 CI
+### 4.2 Steps
 
-The source workflow calls the reusable
-[`qmk/.github/.github/workflows/qmk_userspace_build.yml@main`](https://github.com/qmk/.github/blob/main/.github/workflows/qmk_userspace_build.yml),
-which takes `qmk_repo`, `qmk_ref` and `preparation_command` inputs and runs
-`qmk userspace-compile` in the `ghcr.io/qmk/qmk_cli:latest` container. So:
-
-```yaml
-    uses: qmk/.github/.github/workflows/qmk_userspace_build.yml@main
-    with:
-      qmk_repo: vial-kb/vial-qmk
-      qmk_ref: vial              # vial-qmk's default branch, not "master"
-```
-
-Two things to verify on the first CI run rather than assume:
-
-* whether the reusable workflow checks out `qmk_firmware` **with submodules** — an RP2040 build
-  needs `lib/chibios` and `lib/chibios-contrib`. If not, `preparation_command: make git-submodule`
-  is the escape hatch the workflow provides for exactly this.
-* whether `vial-qmk`'s `requirements.txt` installs cleanly in that container.
-
-Start with a bare build workflow. The source repo's version/tag/release machinery is good but
-independent of the port; port it afterwards, in its own change, with `cozy` dropped from the
-two-keymap logic.
-
-### 4.3 Steps
-
-1. **Skeleton**: `qmk.json`, `Makefile`, `.gitignore`, keymap directory. Copy `vial.json`,
-   `VIAL_KEYBOARD_UID` and the unlock combo from `vial-qmk`'s `keebio/iris_ce/keymaps/vial/`.
+1. **Fork the keymap**: copy `keymap.c`, `config.h` and `rules.mk` across; copy `vial.json`,
+   `VIAL_KEYBOARD_UID` and the unlock combo out of `vial-qmk`'s `keebio/iris_ce/keymaps/vial/`.
    Generate a *fresh* UID with `python3 util/vial_generate_keyboard_uid.py` — the UID identifies
    this firmware to the GUI and should not be shared with upstream's keymap.
-2. **Minimal build**: bare `rules.mk` (`VIA_ENABLE`, `VIAL_ENABLE`, `VIALRGB_ENABLE`,
-   `RGB_MATRIX_ENABLE`, `CAPS_WORD_ENABLE`, `KEY_OVERRIDE_ENABLE`) and the upstream `vial` keymap's
-   `keymap.c`, unchanged. Get CI green and a `.uf2` artifact **before** porting anything. This
-   isolates "does Vial build in a userspace at all" from "does `cozy_de` port".
-3. **Port `keymap.c`**: all four layers verbatim, plus the `OS_*` defines (§2.4) and the
-   `QK_KB_0` enum base (§2.3). Fill in `customKeycodes` in `vial.json` to match.
-4. **Port `config.h`**: unchanged except — drop `ENABLE_RGB_MATRIX_KEY_GROUPS` (§3.2), add the Vial
-   UID/unlock defines, keep `DYNAMIC_KEYMAP_LAYER_COUNT 5` (it fits, §1.2).
-5. **Decide §2.2**, then either set `QMK_SETTINGS = no` or add the settings-seeding code.
-6. **Decide §2.1**, then implement the key-override seeding (or its alternative). Test on hardware:
-   `Shift+9` → `+`, `Shift+0` → `?`, `Shift+6` → `ß`, and `Alt`-held repeated `ä` walking the
-   window switcher without the list closing between taps.
-7. **Version string**: `VERSION_STRING` becomes e.g. `"Cozy-DE-Vial, rev01"`, and the release
-   workflow's version gate is ported to a single keymap.
+2. **Make it compile**: add the eight `OS_*` defines (§2.4), re-base the custom-keycode enum on
+   `QK_KB_0` (§2.3), and list those ten keycodes in `vial.json`'s `customKeycodes` in the same
+   order. Drop `ENABLE_RGB_MATRIX_KEY_GROUPS` (§3.2) and the now-pointless `debug_enable = true`
+   (§3.4). Keep `DYNAMIC_KEYMAP_LAYER_COUNT 5` — it fits (§1.2).
+3. **Point `qmk.json` at it** and get a green CI build with a downloadable `.uf2`.
+4. **Flash and check the layers** in the Vial GUI: all four layers present, the ten custom keycodes
+   named, RGB controllable. At this point the Shift mapping is still wrong — that is expected.
+5. **Provision** (§6): configure the nine key overrides once, `vitaly save` them to
+   `tools/cozy_de.vil`, commit it, and write `tools/provision.sh`.
+6. **Test on hardware**: `Shift+9` → `+`, `Shift+0` → `?`, `Shift+6` → `ß`, the accent macros
+   (`é è à ñ ç`), and `Alt` held while tapping `ä` repeatedly walking the window switcher without
+   the list closing between taps. Then re-test the layer-taps to confirm permissive hold took.
+7. **Version string** becomes e.g. `"Cozy-DE-Vial, rev01"`. The release job on `main` is date-based
+   and needs no version gate, so the old repo's version ladder does not come across.
 8. **ReadMe**: what differs from the non-Vial firmware — Caps Word inverts on Shift (§3.1), every
-   flash resets Vial customisations (§2.5), and where the `.vil` file lives.
+   flash resets the Vial side (§2.5), and that `provision.sh` is the answer to that.
 
-Steps 1-4 are mechanical. Steps 5-6 are the actual work.
+## 5. Decision: hard fork
 
-## 5. The thing to decide before any of this: how the two keymaps stay in sync
+**The keymap is copied, not shared.** The `cozy_de` keymap in
+`qmk_userspace_iris_cozy_keymap` is planned to retire once this one works, so the copy here becomes
+the only copy and there is nothing to keep in sync. `cozy` (the US-ANSI keymap, which does use the
+`getreuer/custom_shift_keys` community module) stays where it is.
 
-`vial-qmk` sits on QMK 0.29.0; the `cozy` userspace builds on QMK master. §2.4 is the first symptom
-and will not be the last — a keycode or a feature added to QMK after 2025-05 is simply not
-available here. Three postures:
+This removes what would otherwise have been the awkward part of the port: `vial-qmk` sits on QMK
+0.29.0 while the old userspace builds against QMK master, so a shared `keymap.c` would have needed
+`#ifdef` scaffolding for every post-0.29 QMK feature — starting with §2.4 and growing over time.
+A fork simply targets `vial-qmk` and is written against what `vial-qmk` has.
 
-* **Fork and drift.** Copy `cozy_de` here, fix it up, accept that the two diverge. Simplest now,
-  worst later.
-* **One source, two builds.** Keep `keymap.c` identical in both repositories, with the `vial-qmk`
-  gaps behind `#ifndef`/`#ifdef VIAL_ENABLE` guards (as sketched in §2.4), and a script or
-  submodule that copies it across. The `cozy_de` keymap is already written in a style that makes
-  this realistic: no community modules, almost no custom code.
-* **Vial only.** If the Vial build turns out to be strictly better — GUI editing, no `EE_CLR`
-  dance — retire the non-Vial `cozy_de` and keep `cozy` (the US-ANSI one, which does use a
-  community module) where it is.
+Two consequences worth acting on:
 
-Worth answering before step 3, because it decides whether the ported `keymap.c` is a copy or a
-shared file.
+* The `#ifndef OS_LSFT` guard in §2.4 is still worth keeping, not for the old repo's sake but so
+  the file keeps compiling when `vial-qmk` eventually rebases past that QMK version.
+* Until the old `cozy_de` is actually retired, a fix made in one place does not reach the other.
+  Keep the window short, and treat the old keymap as frozen once this one is flashed in anger.
+
+## 6. Provisioning the Vial side from a script
+
+This is the answer to both §2.1 (key overrides) and §2.2 (permissive hold), and it replaces the
+"click it in the GUI after every flash" chore that §2.5 would otherwise impose.
+
+### 6.1 The tool
+
+[`vitaly`](https://github.com/bskaplou/vitaly) is a command-line client for the VIA/Vial protocol
+(Rust, MIT, by @bskaplou — third-party, **not** an official `vial-kb` project). Install with
+`cargo install vitaly`, `brew install bskaplou/tap/vitaly`, or a
+[prebuilt binary](https://github.com/bskaplou/vitaly/releases/latest); on Linux it needs
+`libudev-dev`.
+
+It has the two subcommands this needs:
+
+* `vitaly save -f x.vil` / `vitaly load -f x.vil` — `load` restores, in its own words, *"Macros,
+  Key overrides, Alt repeat keys, Combos, TapDances, Keys"*. `-p` previews a file instead of
+  writing it.
+* `vitaly settings -q <qsid> -v <value>` — reads and writes QMK Settings by ID, with `-r` to reset
+  all. The IDs match `qmk_settings.c` exactly: **22 = Permissive Hold**, 7 = Tapping Term,
+  26 = Chordal Hold, 27 = Flow Tap.
+
+Also useful: `vitaly devices` lists connected boards (`-i <id>` selects one), `vitaly lock` reports
+and toggles the lock, and `vitaly bootload` drops the board into the bootloader.
+
+### 6.2 Does it need the keyboard unlocked?
+
+Mostly **no**, which is what makes an unattended script possible. Unlocking is not scriptable —
+`vitaly lock -u` prints *"Push marked buttons and keep then pushed to unlock"* and waits for a
+physical key hold on the two keys named by `VIAL_UNLOCK_COMBO_ROWS` / `_COLS`.
+
+Reading `vial-qmk`, exactly four things are gated on the lock:
+
+| operation | gated? | where |
+|---|---|---|
+| key overrides, combos, tap dances, alt-repeat | **no** | `vial.c:286-320` |
+| keymap keycodes | **no** | `via.c` dynamic keymap commands |
+| QMK Settings get / set / reset | **no** | `vial.c:210-222` |
+| dynamic **macros** | yes | `via.c:403` |
+| bootloader jump (`vitaly bootload`) | yes | `via.c:438` |
+| matrix tester | yes | `via.c:253` |
+| writing `QK_BOOT` as a keycode | yes | `vial.c:81` |
+
+So for `cozy_de` the whole provisioning run works on a locked keyboard. The keymap's "macros" are
+firmware custom keycodes (`MX_EACU` and friends), not Vial *dynamic* macros, so its macro set is
+empty and the one gated part of `vitaly load` writes nothing. Note that the firmware silently skips
+a gated write rather than erroring, so `vitaly` will still print "Macros restored" — do not read
+that as proof that macros were written. If dynamic macros are ever added, the script needs a
+`vitaly lock -u` and a human holding two keys.
+
+### 6.3 The script
+
+Produce `tools/cozy_de.vil` once, from a board configured the way you want it:
+
+```sh
+vitaly -i <id> save -f tools/cozy_de.vil
+```
+
+Commit it — it is the Vial-side counterpart to `keymap.c`, and it is the one artifact that says
+what the nine key overrides are. Then `tools/provision.sh`, run after every flash:
+
+```sh
+#!/usr/bin/env bash
+# Restore the Vial-side configuration that a firmware flash wipes (see docs/, section 2.5).
+# Needs https://github.com/bskaplou/vitaly on PATH. No unlock required: nothing here is a
+# dynamic macro, a bootloader jump or a QK_BOOT keycode write.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+vitaly devices                            # sanity check: exactly one Iris CE, and its id
+vitaly load -f cozy_de.vil                # key overrides, combos, tap dances, and the keymap
+vitaly settings -q 22 -v true             # Permissive Hold -- not carried in the .vil
+vitaly settings -q 7                      # echo Tapping Term; expect 500 from config.h
+```
+
+Add `-i <id>` to each call once the board's USB product ID is known, otherwise `vitaly` acts on
+every connected VIA/Vial keyboard.
+
+### 6.4 Caveats
+
+* **Unverified on this hardware.** Every claim above about `vitaly` comes from its README and from
+  reading `vial-qmk`; none of it has been run against an Iris CE. Try `vitaly load -p` (preview)
+  and a `vitaly settings` read before trusting the write path.
+* **`vitaly load` also rewrites the keymap layers**, not just the extras. That is usually what you
+  want after a flash, but it means a stale `.vil` will quietly undo a `keymap.c` change. Re-`save`
+  the `.vil` whenever the layers change, or be ready to explain to yourself why the new layout did
+  not take.
+* **Third-party tool.** The fallback, if `vitaly` disappoints, is the Vial GUI's own
+  *File -> Save/Load current layout*, plus ticking Permissive Hold by hand — i.e. the manual
+  version of the same two steps.
+* If provisioning proves annoying enough that it gets skipped, that is the signal to switch to
+  firmware seeding (§2.1 option 2) and `QMK_SETTINGS = no` (§2.2 option 2), which need no tooling
+  at all.
 
 ## References
 
@@ -396,3 +482,5 @@ shared file.
 * QMK Caps Word — <https://docs.qmk.fm/features/caps_word>
 * QMK userspace — <https://docs.qmk.fm/newbs_external_userspace>
 * Reusable userspace build workflow — <https://github.com/qmk/.github/blob/main/.github/workflows/qmk_userspace_build.yml>
+* `vitaly`, the VIA/Vial command-line tool — <https://github.com/bskaplou/vitaly>
+* Vial user manual (GUI save/load of `.vil` files) — <https://get.vial.today/manual/>
