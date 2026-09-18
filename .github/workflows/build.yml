@@ -71,6 +71,22 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "Releasing as $tag"
 
+      # Which extensions appear depends on the MCU of each build target: an
+      # RP2040 board like the Iris CE produces a .uf2 and nothing else, so the
+      # .hex/.bin globs below match nothing and `fail_on_unmatched_files` has
+      # to stay false. That would also let a completely empty release through,
+      # so assert here that the build actually produced something.
+      - name: Check firmware was built
+        run: |
+          set -euo pipefail
+          mapfile -t found < <(find firmware -type f \( -name '*.uf2' -o -name '*.hex' -o -name '*.bin' \))
+          if [ "${#found[@]}" -eq 0 ]; then
+            echo "::error::No firmware binaries in the build artifact; refusing to publish an empty release."
+            exit 1
+          fi
+          printf 'Found %d firmware file(s):\n' "${#found[@]}"
+          printf '  %s\n' "${found[@]}"
+
       - name: Create release
         uses: softprops/action-gh-release@v3
         with:
@@ -80,7 +96,7 @@ jobs:
           target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           body: |
             Vial firmware for `keebio/iris_ce/rev1`, built from
             ${{ github.repository }}@${{ github.sha }}
