@@ -68,3 +68,11 @@ qmk config user.overlay_dir=$PWD/qmk-vial-userspace-iris-ce
 cd qmk-vial-userspace-iris-ce
 qmk userspace-compile
 ```
+
+## Porting the `cozy_de` keymap
+
+The next step is bringing the `cozy_de` keymap over from
+[`qmk_userspace_iris_cozy_keymap`](https://github.com/matey-jack/qmk_userspace_iris_cozy_keymap).
+The plan, including a feature-by-feature check of what Vial does and does not
+support and what has to change in the keymap, is in
+[`docs/porting-cozy-de-to-vial.md`](docs/porting-cozy-de-to-vial.md).
