@@ -35,28 +35,57 @@ Download the `.uf2` from a release (or from a branch build's artifact), put the
 board into bootloader mode, and copy the file onto the `RPI-RP2` drive that
 appears. The Iris CE rev1 is RP2040-based, so that is all there is to it.
 
+## After flashing: run `tools/provision.sh`
+
+Vial keeps part of its configuration in the keyboard's EEPROM, and every flash
+wipes it — because the EEPROM-validity magic is a random number regenerated on
+each build. The keymap layers are re-seeded from `keymap.c` automatically, which
+is what we want, but the **key overrides** (the whole Cozy Shift mapping:
+`Shift+9` → `+`, `Shift+0` → `?`, the ä/Tab chameleon key, …) and the
+**permissive-hold setting** are not. So after every flash:
+
+```sh
+tools/provision.sh
+```
+
+It needs [`vitaly`](https://github.com/bskaplou/vitaly), a command-line client
+for the VIA/Vial protocol (`cargo install vitaly`, `brew install
+bskaplou/tap/vitaly`, or a release binary). No unlocking required — nothing it
+writes is behind Vial's lock.
+
+## The `cozy_de` keymap
+
+`keyboards/keebio/iris_ce/keymaps/cozy_de/` is the Vial edition of the `cozy_de`
+keymap, forked from
+[`qmk_userspace_iris_cozy_keymap`](https://github.com/matey-jack/qmk_userspace_iris_cozy_keymap).
+It is a hard fork: that keymap is being retired, so this is the only copy.
+
+What Vial made us do differently — and why key overrides and permissive hold
+live in a script rather than in the firmware — is in
+[`docs/porting-cozy-de-to-vial.md`](docs/porting-cozy-de-to-vial.md).
+
 ## Build targets
 
-`qmk.json` currently builds the stock Vial keymap:
+`qmk.json` builds the `cozy_de` keymap:
 
 ```json
-["keebio/iris_ce/rev1", "vial"]
+["keebio/iris_ce/rev1", "cozy_de"]
 ```
 
 Note that vial-qmk expects the **tuple** form `["keyboard", "keymap"]` here.
 Current upstream QMK also accepts `{"keyboard": ..., "keymap": ...}`, but
 vial-qmk's userspace schema predates that and will reject it.
 
-To customise the keymap, copy the stock one out of vial-qmk into this repo and
-point the build target at it:
+To add another keymap, put it at
 
 ```
 keyboards/keebio/iris_ce/keymaps/<name>/{keymap.c,config.h,rules.mk,vial.json}
 ```
 
-A Vial keymap needs `VIAL_ENABLE = yes` in `rules.mk`, its own `vial.json`, and
-a `VIAL_KEYBOARD_UID` in `config.h` — generate a fresh one with
-`python3 util/vial_generate_keyboard_uid.py` from a vial-qmk checkout.
+and add it to `build_targets`. A Vial keymap needs `VIAL_ENABLE = yes` in
+`rules.mk`, its own `vial.json`, and a `VIAL_KEYBOARD_UID` in `config.h` —
+generate a fresh one with `python3 util/vial_generate_keyboard_uid.py` from a
+vial-qmk checkout.
 
 ## Building locally
 
