@@ -98,8 +98,8 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: false
           body: |
-            Vial firmware for `keebio/iris_ce/rev1`, built from
-            ${{ github.repository }}@${{ github.sha }}
+            Vial firmware for `keebio/iris_ce/rev1` and `keebart/sofle_choc_pro`,
+            built from ${{ github.repository }}@${{ github.sha }}
             against [vial-kb/vial-qmk@vial](https://github.com/vial-kb/vial-qmk/tree/vial).
 
             Flash the `.uf2` by putting the board into bootloader mode and

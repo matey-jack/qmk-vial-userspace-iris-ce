@@ -1,6 +1,7 @@
 {
     "userspace_version": "1.1",
     "build_targets": [
-        ["keebio/iris_ce/rev1", "vial"]
+        ["keebio/iris_ce/rev1", "vial"],
+        ["keebart/sofle_choc_pro", "vial"]
     ]
 }
