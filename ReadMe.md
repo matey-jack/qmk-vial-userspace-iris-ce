@@ -1,9 +1,9 @@
-# Vial firmware for the Keebio Iris CE
+# Vial firmware for the Keebio Iris CE and Keebart Sofle Choc Pro
 
 This repo only exists to run a GitHub Actions flow for building QMK-VIAL, cloned
 from `git@github.com:vial-kb/vial-qmk.git`.
 
-The keyboard is set to keebio/iris_ce.
+The build targets are keebio/iris_ce and keebart/sofle_choc_pro.
 
 It is a [QMK external userspace][userspace]: the firmware sources live in
 vial-qmk, this repo only carries the build targets (`qmk.json`) and any keymaps
@@ -33,14 +33,16 @@ we want to override.
 
 Download the `.uf2` from a release (or from a branch build's artifact), put the
 board into bootloader mode, and copy the file onto the `RPI-RP2` drive that
-appears. The Iris CE rev1 is RP2040-based, so that is all there is to it.
+appears. Both the Iris CE rev1 and the Sofle Choc Pro are RP2040-based, so
+that is all there is to it.
 
 ## Build targets
 
-`qmk.json` currently builds the stock Vial keymap:
+`qmk.json` currently builds the stock Vial keymap for both boards:
 
 ```json
-["keebio/iris_ce/rev1", "vial"]
+["keebio/iris_ce/rev1", "vial"],
+["keebart/sofle_choc_pro", "vial"]
 ```
 
 Note that vial-qmk expects the **tuple** form `["keyboard", "keymap"]` here.
