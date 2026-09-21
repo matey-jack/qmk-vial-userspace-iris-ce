@@ -60,6 +60,15 @@ A Vial keymap needs `VIAL_ENABLE = yes` in `rules.mk`, its own `vial.json`, and
 a `VIAL_KEYBOARD_UID` in `config.h` — generate a fresh one with
 `python3 util/vial_generate_keyboard_uid.py` from a vial-qmk checkout.
 
+## Seeding a keymap instead of compiling one
+
+There is a second way to get a custom keymap onto a board: flash the stock Vial firmware above
+and then write the keymap into its EEPROM over USB, so there is no per-keymap build at all.
+
+[`init_vial/sofle/`](init_vial/sofle/) does that for the Sofle Choc Pro with the `cozy_de`
+keymap — a `.vil` layout file, a `vitaly` script that loads it and sets the two tap-hold
+settings a `.vil` does not carry, and a plan documenting what transfers and what does not.
+
 ## Building locally
 
 ```sh
