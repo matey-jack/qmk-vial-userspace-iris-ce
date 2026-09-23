@@ -2088,7 +2088,7 @@
     },
     {
       "trigger": "KC_6",
-      "replacement": "KC_MINS",
+      "replacement": "KC_RBRC",
       "layers": 65535,
       "trigger_mods": 34,
       "negative_mod_mask": 0,
@@ -2133,7 +2133,7 @@
     },
     {
       "trigger": "KC_9",
-      "replacement": "KC_RBRC",
+      "replacement": "KC_MINS",
       "layers": 65535,
       "trigger_mods": 34,
       "negative_mod_mask": 0,
