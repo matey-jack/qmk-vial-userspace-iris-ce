@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - init_vial/**
+  workflow_dispatch:
 
 # Default to read-only; the job below grants itself what it needs.
 permissions:
@@ -83,8 +84,8 @@ jobs:
 
           if [ -n "$existing_id" ]; then
             gh api "repos/$REPO/issues/comments/${existing_id}" \
-              -X PATCH -f body=@body.md
+              -X PATCH -F body=@body.md
           else
             gh api "repos/$REPO/issues/${PR_NUMBER}/comments" \
-              -X POST -f body=@body.md
+              -X POST -F body=@body.md
           fi
