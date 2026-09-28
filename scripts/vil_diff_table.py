@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
-"""Print a Markdown table of the JSON differences between two revisions of
+"""Write a Markdown table of the JSON differences between two revisions of
 each *.vil file under init_vial/.
 
 Usage:
-    vil_diff_table.py <base-rev> [<head-rev>]
+    vil_diff_table.py <base-rev> <head-rev> --out <file> [--marker <text>]
+                                             [--context <text>]
 
-<head-rev> defaults to HEAD. Revisions are resolved with `git show`, so they
-can be any commit-ish (SHA, branch, tag). Prints nothing (and exits 0) if no
-init_vial/**/*.vil file differs between the two revisions.
+Revisions are resolved with `git show`, so they can be any commit-ish (SHA,
+branch, tag). If no init_vial/**/*.vil file differs between the two
+revisions, nothing is written and the script exits with status 1 (the
+caller can use that to decide whether there is anything to post); otherwise
+it writes <marker>, a heading, <context>, and one table per changed file to
+--out and exits 0.
+
+Writing straight to a file (rather than printing to stdout for a shell
+script to capture) means the diffed keycode/macro text -- which comes from
+whatever the pushing branch put in the .vil file -- never passes through a
+shell string at all, so there's nothing for it to be misinterpreted as.
 """
+import argparse
 import json
 import subprocess
 import sys
@@ -76,12 +86,10 @@ def diff_json(before, after, path, rows):
         return
     if isinstance(before, list) and isinstance(after, list):
         for i in range(max(len(before), len(after))):
-            b = before[i] if i < len(before) else before
-            a = after[i] if i < len(after) else after
             if i >= len(before):
-                rows.append((path_join(path, i), "*(none)*", describe(a)))
+                rows.append((path_join(path, i), "*(none)*", describe(after[i])))
             elif i >= len(after):
-                rows.append((path_join(path, i), describe(b), "*(none)*"))
+                rows.append((path_join(path, i), describe(before[i]), "*(none)*"))
             else:
                 diff_json(before[i], after[i], path_join(path, i), rows)
         return
@@ -98,13 +106,7 @@ def render_table(rows):
     return "\n".join(lines)
 
 
-def main():
-    if not 1 <= len(sys.argv) - 1 <= 2:
-        print(__doc__, file=sys.stderr)
-        sys.exit(2)
-    base = sys.argv[1]
-    head = sys.argv[2] if len(sys.argv) > 2 else "HEAD"
-
+def build_sections(base, head):
     sections = []
     for path in changed_vil_paths(base, head):
         before = read_json_at(base, path)
@@ -114,9 +116,32 @@ def main():
         if not rows:
             continue
         sections.append(f"### `{path}`\n\n{render_table(rows)}")
+    return sections
 
-    if sections:
-        print("\n\n".join(sections))
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("base", help="base revision (commit-ish)")
+    parser.add_argument("head", help="head revision (commit-ish)")
+    parser.add_argument("--out", required=True, help="file to write the comment body to")
+    parser.add_argument("--marker", default="", help="leading marker line, e.g. an HTML comment")
+    parser.add_argument("--context", default="", help="one-line context shown under the heading")
+    args = parser.parse_args()
+
+    sections = build_sections(args.base, args.head)
+    if not sections:
+        sys.exit(1)
+
+    parts = []
+    if args.marker:
+        parts.append(args.marker)
+    parts.append("## Vial layout diff")
+    if args.context:
+        parts.append(args.context)
+    parts.append("\n\n".join(sections))
+
+    with open(args.out, "w") as f:
+        f.write("\n\n".join(parts) + "\n")
 
 
 if __name__ == "__main__":
