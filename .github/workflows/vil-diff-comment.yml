@@ -4,14 +4,21 @@ on:
   push:
     paths:
       - init_vial/**
+  pull_request:
+    paths:
+      - init_vial/**
   workflow_dispatch:
 
 # Default to read-only; the job below grants itself what it needs.
 permissions:
   contents: read
 
+# Keyed on branch name (not github.ref, which differs between push and
+# pull_request events) so a push followed immediately by PR creation
+# cancels the redundant run instead of racing it to post a duplicate
+# comment.
 concurrency:
-  group: vil-diff-comment-${{ github.ref }}
+  group: vil-diff-comment-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
