@@ -290,7 +290,7 @@
         "OSM(MOD_LGUI)"
       ],
       [
-        "KC_NO",
+        "QK_CLEAR_EEPROM",
         "KC_F10",
         "KC_F9",
         "KC_F8",
@@ -1847,7 +1847,7 @@
       "KC_RSHIFT",
       "KC_NO",
       "KC_NO",
-      "KC_NO"
+      "QK_CAPS_WORD_TOGGLE"
     ],
     [
       "KC_NO",
