@@ -29,15 +29,15 @@
       ],
       [
         "KC_LCTRL",
-        "LT(2,KC_Z)",
+        "LT2(KC_Z)",
         "KC_X",
         "KC_C",
         "KC_V",
         "LSFT(KC_NONUS_HASH)"
       ],
       [
-        "MO(2)",
-        "KC_NO",
+        "KC_PGUP",
+        "KC_PGDOWN",
         "KC_LALT",
         "LT2(KC_DELETE)",
         "KC_SPACE",
@@ -69,19 +69,19 @@
       ],
       [
         "KC_ENTER",
-        "LT(2,KC_SLASH)",
+        "LT2(KC_SLASH)",
         "KC_DOT",
         "KC_COMMA",
         "KC_M",
         "KC_J"
       ],
       [
-        "MO(2)",
         "KC_RCTRL",
         "MO(3)",
+        "LGUI(KC_TAB)",
         "LT2(KC_INSERT)",
         "KC_E",
-        "LGUI(KC_TAB)"
+        "QK_CAPS_WORD_TOGGLE"
       ]
     ],
     [
@@ -200,8 +200,8 @@
         "KC_ENTER"
       ],
       [
-        "KC_NO",
-        "KC_NO",
+        "KC_WH_D",
+        "KC_WH_U",
         "KC_LALT",
         "KC_TRNS",
         "KC_TRNS",
@@ -240,12 +240,12 @@
         "RALT(KC_GRAVE)"
       ],
       [
-        "KC_NO",
-        "KC_NO",
         "KC_RCTRL",
+        "KC_NO",
+        "KC_LGUI",
         "KC_TRNS",
         "KC_NO",
-        "KC_LGUI"
+        "KC_NO"
       ]
     ],
     [
@@ -290,7 +290,7 @@
         "OSM(MOD_LGUI)"
       ],
       [
-        "EE_CLR",
+        "KC_NO",
         "KC_F10",
         "KC_F9",
         "KC_F8",
@@ -1843,11 +1843,11 @@
   ],
   "combo": [
     [
-      "KC_LSFT",
-      "KC_RSFT",
+      "KC_LSHIFT",
+      "KC_RSHIFT",
       "KC_NO",
       "KC_NO",
-      "CW_TOGG"
+      "KC_NO"
     ],
     [
       "KC_NO",
@@ -2079,7 +2079,7 @@
     },
     {
       "trigger": "KC_3",
-      "replacement": "KC_NUHS",
+      "replacement": "KC_NONUS_HASH",
       "layers": 65535,
       "trigger_mods": 34,
       "negative_mod_mask": 0,
@@ -2088,7 +2088,7 @@
     },
     {
       "trigger": "KC_6",
-      "replacement": "KC_RBRC",
+      "replacement": "KC_RBRACKET",
       "layers": 65535,
       "trigger_mods": 34,
       "negative_mod_mask": 0,
@@ -2115,7 +2115,7 @@
     },
     {
       "trigger": "KC_8",
-      "replacement": "LSFT(KC_RBRC)",
+      "replacement": "LSFT(KC_RBRACKET)",
       "layers": 65535,
       "trigger_mods": 2,
       "negative_mod_mask": 0,
@@ -2124,7 +2124,7 @@
     },
     {
       "trigger": "KC_8",
-      "replacement": "RSFT(KC_RBRC)",
+      "replacement": "RSFT(KC_RBRACKET)",
       "layers": 65535,
       "trigger_mods": 32,
       "negative_mod_mask": 0,
@@ -2133,7 +2133,7 @@
     },
     {
       "trigger": "KC_9",
-      "replacement": "KC_MINS",
+      "replacement": "KC_MINUS",
       "layers": 65535,
       "trigger_mods": 34,
       "negative_mod_mask": 0,
@@ -2142,7 +2142,7 @@
     },
     {
       "trigger": "KC_0",
-      "replacement": "LSFT(KC_MINS)",
+      "replacement": "LSFT(KC_MINUS)",
       "layers": 65535,
       "trigger_mods": 2,
       "negative_mod_mask": 0,
@@ -2151,7 +2151,7 @@
     },
     {
       "trigger": "KC_0",
-      "replacement": "RSFT(KC_MINS)",
+      "replacement": "RSFT(KC_MINUS)",
       "layers": 65535,
       "trigger_mods": 32,
       "negative_mod_mask": 0,
@@ -2159,7 +2159,7 @@
       "options": 135
     },
     {
-      "trigger": "LSFT(KC_NUHS)",
+      "trigger": "LSFT(KC_NONUS_HASH)",
       "replacement": "LSFT(KC_2)",
       "layers": 65535,
       "trigger_mods": 2,
@@ -2168,7 +2168,7 @@
       "options": 135
     },
     {
-      "trigger": "LSFT(KC_NUHS)",
+      "trigger": "LSFT(KC_NONUS_HASH)",
       "replacement": "RSFT(KC_2)",
       "layers": 65535,
       "trigger_mods": 32,
@@ -2177,7 +2177,7 @@
       "options": 135
     },
     {
-      "trigger": "KC_QUOT",
+      "trigger": "KC_QUOTE",
       "replacement": "KC_TAB",
       "layers": 65535,
       "trigger_mods": 221,
