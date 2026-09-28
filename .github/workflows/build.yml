@@ -2,6 +2,12 @@ name: Build Vial firmware
 
 on:
   push:
+    paths:
+      - Makefile
+      - qmk.json
+      - keyboards/**
+      - layouts/**
+      - users/**
   workflow_dispatch:
 
 # Default to read-only; the jobs below grant themselves what they need.
