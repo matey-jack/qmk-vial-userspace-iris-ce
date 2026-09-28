@@ -1,0 +1,105 @@
+name: Post Vial layout diff
+
+on:
+  push:
+    paths:
+      - init_vial/**
+
+# Default to read-only; the job below grants itself what it needs.
+permissions:
+  contents: read
+
+concurrency:
+  group: vil-diff-comment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Comment layout diff
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Nothing to post if this branch has no open PR.
+      - name: Find PR for this branch
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pr_json="$(gh pr list --head "${GITHUB_REF_NAME}" --state open \
+            --json number,baseRefName --jq '.[0] // empty')"
+          if [ -z "$pr_json" ]; then
+            echo "No open PR for ${GITHUB_REF_NAME}; nothing to do."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "number=$(jq -r '.number' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
+          echo "base=$(jq -r '.baseRefName' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
+
+      - name: Generate diff table
+        if: steps.pr.outputs.found == 'true'
+        id: diff
+        env:
+          BASE_REF: ${{ steps.pr.outputs.base }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_REF" --depth=1000
+          merge_base="$(git merge-base "origin/$BASE_REF" HEAD)"
+          table="$(python3 scripts/vil_diff_table.py "$merge_base" "$GITHUB_SHA")"
+          if [ -z "$table" ]; then
+            echo "No .vil JSON changes to report."
+            echo "has_table=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_table=true" >> "$GITHUB_OUTPUT"
+          delim="VIL_DIFF_EOF_$(date +%s%N)"
+          {
+            echo "table<<$delim"
+            echo "$table"
+            echo "$delim"
+          } >> "$GITHUB_OUTPUT"
+
+      # Values interpolated via `env:` below (not spliced into the script
+      # with `${{ }}`) because the diff table embeds text read from .vil
+      # files on the pushed branch, which a fork PR author controls; treating
+      # it as script source instead of inert variable data would be a
+      # script-injection hole.
+      - name: Post or update comment
+        if: steps.pr.outputs.found == 'true' && steps.diff.outputs.has_table == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          BASE_REF: ${{ steps.pr.outputs.base }}
+          HEAD_SHA: ${{ github.sha }}
+          TABLE: ${{ steps.diff.outputs.table }}
+          MARKER: <!-- vil-diff-table -->
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          {
+            echo "$MARKER"
+            echo "## Vial layout diff"
+            echo
+            echo "_Comparing merge-base with \`$BASE_REF\` to \`${HEAD_SHA:0:7}\`._"
+            echo
+            echo "$TABLE"
+          } > body.md
+
+          existing_id="$(gh api "repos/$REPO/issues/${PR_NUMBER}/comments" \
+            --jq "[.[] | select(.body | startswith(\"$MARKER\"))][0].id // empty")"
+
+          if [ -n "$existing_id" ]; then
+            gh api "repos/$REPO/issues/comments/${existing_id}" \
+              -X PATCH -f body=@body.md
+          else
+            gh api "repos/$REPO/issues/${PR_NUMBER}/comments" \
+              -X POST -f body=@body.md
+          fi
