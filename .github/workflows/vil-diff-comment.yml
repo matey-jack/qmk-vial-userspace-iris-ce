@@ -44,6 +44,11 @@ jobs:
           echo "number=$(jq -r '.number' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
           echo "base=$(jq -r '.baseRefName' <<<"$pr_json")" >> "$GITHUB_OUTPUT"
 
+      # Writes body.md itself (see the script's docstring for why): the
+      # diffed keycode/macro text comes from whatever the pushing branch put
+      # in the .vil file, so it never passes through a shell string -- there
+      # is nothing for a shell to misinterpret. Steps in a job share the
+      # runner's filesystem, so the later step just finds body.md waiting.
       - name: Generate diff table
         if: steps.pr.outputs.found == 'true'
         id: diff
@@ -53,46 +58,26 @@ jobs:
           set -euo pipefail
           git fetch origin "$BASE_REF" --depth=1000
           merge_base="$(git merge-base "origin/$BASE_REF" HEAD)"
-          table="$(python3 scripts/vil_diff_table.py "$merge_base" "$GITHUB_SHA")"
-          if [ -z "$table" ]; then
+          if python3 scripts/vil_diff_table.py "$merge_base" "$GITHUB_SHA" \
+              --out body.md \
+              --marker '<!-- vil-diff-table -->' \
+              --context "_Comparing merge-base with \`$BASE_REF\` to \`${GITHUB_SHA:0:7}\`._"
+          then
+            echo "has_table=true" >> "$GITHUB_OUTPUT"
+          else
             echo "No .vil JSON changes to report."
             echo "has_table=false" >> "$GITHUB_OUTPUT"
-            exit 0
           fi
-          echo "has_table=true" >> "$GITHUB_OUTPUT"
-          delim="VIL_DIFF_EOF_$(date +%s%N)"
-          {
-            echo "table<<$delim"
-            echo "$table"
-            echo "$delim"
-          } >> "$GITHUB_OUTPUT"
 
-      # Values interpolated via `env:` below (not spliced into the script
-      # with `${{ }}`) because the diff table embeds text read from .vil
-      # files on the pushed branch, which a fork PR author controls; treating
-      # it as script source instead of inert variable data would be a
-      # script-injection hole.
       - name: Post or update comment
         if: steps.pr.outputs.found == 'true' && steps.diff.outputs.has_table == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
-          BASE_REF: ${{ steps.pr.outputs.base }}
-          HEAD_SHA: ${{ github.sha }}
-          TABLE: ${{ steps.diff.outputs.table }}
           MARKER: <!-- vil-diff-table -->
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          {
-            echo "$MARKER"
-            echo "## Vial layout diff"
-            echo
-            echo "_Comparing merge-base with \`$BASE_REF\` to \`${HEAD_SHA:0:7}\`._"
-            echo
-            echo "$TABLE"
-          } > body.md
-
           existing_id="$(gh api "repos/$REPO/issues/${PR_NUMBER}/comments" \
             --jq "[.[] | select(.body | startswith(\"$MARKER\"))][0].id // empty")"
 
