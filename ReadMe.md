@@ -53,6 +53,8 @@ Both boards also carry a keyboard-level `config.h` under
 `keyboards/<keyboard>/` (overlaid onto vial-qmk's own) that defines
 `BOTH_SHIFTS_TURNS_ON_CAPS_WORD`, so pressing both Shift keys together toggles
 Caps Word (a mode that capitalises a word and then switches itself off).
+This seems to be the only option I need and that is not already set in VIAL's defaults 
+or settable instantly by the VIAL UI. (See below about `.vil` files.) 
 
 To customise the keymap, copy the stock one out of vial-qmk into this repo and
 point the build target at it:
