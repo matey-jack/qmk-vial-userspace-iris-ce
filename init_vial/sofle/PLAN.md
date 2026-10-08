@@ -2,9 +2,8 @@
 
 **Status:** files written, not yet tried on hardware. Written 2026-09-21.
 
-**Goal:** flash unmodified Vial firmware onto a **Keebart Sofle Choc Pro**, then seed it with the
-`cozy_de` keymap from a `.vil` file plus a small script that sets the things a `.vil` does not
-carry. No custom `keymap.c` to maintain, no per-change recompile.
+**Goal:** flash unmodified Vial firmware onto a **Keebart Sofle Choc Pro**, then load it with the
+`cozy_de` keymap from a single `.vil` file, which carries everything, settings included. No custom `keymap.c` to maintain, no per-change recompile.
 
 This is the Sofle edition of the Iris CE plan in
 [`qmk_userspace_iris_cozy_keymap#12`](https://github.com/matey-jack/qmk_userspace_iris_cozy_keymap/pull/12),
@@ -158,7 +157,7 @@ The Sofle Choc Pro has one rotary encoder per half — `keyboard.json` declares 
 
 **They are `KC_NO`, both directions, on all ten layers.** To give them the stock Vial keymap's
 own assignment instead — `ENCODER_CCW_CW(KC_VOLD, KC_VOLU)` and `ENCODER_CCW_CW(KC_MPRV, KC_MNXT)`
-— uncomment the four lines in [`seed-cozy-de.sh`](seed-cozy-de.sh), or set them in the Vial GUI.
+— set them in the Vial GUI, or with `vitaly encoders -l 0 -p 0,0 -v KC_VOLD` (`-p` is `<encoder>,<direction>`; direction 0 is counter-clockwise, 1 clockwise), and likewise `0,1`/`1,0`/`1,1`.
 
 The direction order in the `.vil` is worth writing down, because vial-gui's own variable names
 have it backwards. `encoder_layout[layer][encoder]` is a two-element list indexed by the protocol's
@@ -177,9 +176,7 @@ either way), but they are the wrong way round for anyone writing a `.vil` by han
 
 As on the Iris CE, `ENABLE_RGB_MATRIX_KEY_GROUPS` is **not** among the choices: that colour mode
 exists only in a fork of QMK, so no stock Vial build can offer it, at runtime or otherwise. The
-standard effects are what there is; Solid Color is the closest match. Nothing about RGB is pinned
-in `seed-cozy-de.sh` — it persists on its own once set — but the script carries a commented
-`vitaly rgb` line showing how to fix an effect and colour if you want them reproducible.
+standard effects are what there is; Solid Color is the closest match. The `.vil` does not pin RGB; it persists on its own once set.
 
 ---
 
@@ -202,8 +199,8 @@ Everything that is about the keymap rather than the board. In short, and with th
   10 ms gap.
 - **The Caps Word combo** `KC_LSFT + KC_RSFT → CW_TOGG`, standing in for
   `BOTH_SHIFTS_TURNS_ON_CAPS_WORD`, which is not one of Vial's runtime settings.
-- **The two tap-hold settings**, qsid 7 (`TAPPING_TERM`, 500) and qsid 22 (`PERMISSIVE_HOLD`,
-  true) (<https://github.com/vial-kb/vial-qmk/blob/vial/quantum/qmk_settings.h>).
+- **The two tap-hold settings**, in the `.vil`'s `settings` block: qsid 7 (`TAPPING_TERM`, 500) and
+  qsid 22 (`PERMISSIVE_HOLD`, true) (<https://github.com/vial-kb/vial-qmk/blob/vial/quantum/qmk_settings.h>).
 
 ## 5. What is lost
 
@@ -250,9 +247,10 @@ the original generator was not kept: the conversion happens once.
    `Option<u16>`, so `-i 0` really does mean "product id 0" and not "unset"
    (<https://github.com/bskaplou/vitaly/blob/main/src/main.rs>).
 3. `vitaly load -f cozy_de.vil -p` to preview before writing anything.
-4. Run [`seed-cozy-de.sh`](seed-cozy-de.sh). The unlock keys are compiled in as matrix `(0,0)` and
+4. `vitaly lock -u`, then `vitaly load -f cozy_de.vil`. The unlock keys are compiled in as matrix `(0,0)` and
    `(5,0)` — the two outer keys of the top row, Esc and Backspace in this keymap. `vitaly lock -u`
-   draws which to hold.
+   draws which to hold. `load` also writes the `settings` block (verified in vitaly's
+   `src/commands/load.rs`), so nothing else needs setting.
 5. Test pass, against the README's list: the Shift mapping of the number row, the ä/Tab chameleon
    under Ctrl/Alt/Gui, the five accent macros, ^ and `, the Level-5 items (¢ £ and `DE_LVL5`
    itself), Caps Word via the combo, and the 500 ms tapping term on the four `LT()` keys.

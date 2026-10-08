@@ -1,13 +1,12 @@
 # `cozy_de` on stock Vial, Sofle Choc Pro edition
 
-Three files that put the `cozy_de` keymap on a **Keebart Sofle Choc Pro** running an unmodified
+Files that put the `cozy_de` keymap on a **Keebart Sofle Choc Pro** running an unmodified
 [Vial](https://get.vial.today/) build, with no keymap of our own compiled into the firmware.
 
 | File | What it is |
 | --- | --- |
 | [`PLAN.md`](PLAN.md) | why this works, what changed against the Iris CE version, and every claim sourced |
 | `cozy_de.vil` | the keymap itself: 4 layers (of 10), 9 macros, 13 key overrides, 1 combo |
-| `seed-cozy-de.sh` | loads the `.vil` and sets what it does not carry |
 
 `cozy_de.vil` is the Iris CE file from
 [`qmk_userspace_iris_cozy_keymap#12`](https://github.com/matey-jack/qmk_userspace_iris_cozy_keymap/pull/12),
@@ -33,15 +32,22 @@ cd vial-qmk
 make keebart/sofle_choc_pro:vial
 ```
 
-Then either open `cozy_de.vil` in the Vial GUI (*File → Load saved layout*), or:
+Then load `cozy_de.vil`, either in the Vial GUI (*File → Load saved layout*) or with
+[`vitaly`](https://github.com/bskaplou/vitaly) (`cargo install vitaly`, or a binary from its
+[releases](https://github.com/bskaplou/vitaly/releases)):
 
 ```sh
-cargo install vitaly      # or a binary from https://github.com/bskaplou/vitaly/releases
-./seed-cozy-de.sh
+vitaly lock -u            # hold the two keys it marks until it says unlocked
+vitaly load -f cozy_de.vil
+vitaly lock -l            # optional: lock the board again
 ```
 
-The GUI route applies the `settings` block too; `vitaly load` does not, which is why the script
-sets the tapping term and permissive hold explicitly afterwards.
+The unlock step is needed because Vial refuses to write macros while the keyboard is locked, and
+`cozy_de.vil` has nine. The unlock keys are the two outer keys of the top row (Esc and Backspace).
+
+That one `load` writes everything: layers, macros, key overrides, the combo and the `settings`
+block (tapping term 500 ms, permissive hold). Add `-i 0` if more than one Vial keyboard is
+connected. `vitaly load -f cozy_de.vil -p` previews without writing.
 
 ## What is different from the Iris CE
 
