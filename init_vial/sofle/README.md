@@ -32,7 +32,8 @@ cd vial-qmk
 make keebart/sofle_choc_pro:vial
 ```
 
-Then load `cozy_de.vil`, either in the Vial GUI (*File → Load saved layout*) or with
+Then load `cozy_de.vil`, either in the Vial GUI (*File → Load saved layout*), in the web app at
+<https://vial.rocks> (same menu, nothing to install), or with
 [`vitaly`](https://github.com/bskaplou/vitaly) (`cargo install vitaly`, or a binary from its
 [releases](https://github.com/bskaplou/vitaly/releases)):
 
