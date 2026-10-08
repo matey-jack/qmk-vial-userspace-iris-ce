@@ -49,6 +49,11 @@ Note that vial-qmk expects the **tuple** form `["keyboard", "keymap"]` here.
 Current upstream QMK also accepts `{"keyboard": ..., "keymap": ...}`, but
 vial-qmk's userspace schema predates that and will reject it.
 
+Both boards also carry a keyboard-level `config.h` under
+`keyboards/<keyboard>/` (overlaid onto vial-qmk's own) that defines
+`BOTH_SHIFTS_TURNS_ON_CAPS_WORD`, so pressing both Shift keys together toggles
+Caps Word (a mode that capitalises a word and then switches itself off).
+
 To customise the keymap, copy the stock one out of vial-qmk into this repo and
 point the build target at it:
 
