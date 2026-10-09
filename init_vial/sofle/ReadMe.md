@@ -6,7 +6,7 @@ it is Vial data, loaded over USB, and only a little is compiled into the firmwar
 | Part | What it holds |
 | --- | --- |
 | [`keyboards/keebart/sofle_choc_pro/keymaps/cozy_de/`](../../keyboards/keebart/sofle_choc_pro/keymaps/cozy_de/) | vial-qmk's own Sofle Vial keymap (same `vial.json`, keyboard UID, ten layers and unlock keys), plus the few things Vial cannot set at runtime |
-| `cozy_de.vil` | everything Vial *can* set at runtime: the layers, 9 macros, 13 key overrides and the `settings` block (tapping term 500 ms, permissive hold) |
+| `cozy_de.vil` | everything Vial *can* set at runtime: the layers, 9 macros, 13 key overrides and the [`settings`](#settings) |
 
 Edit `cozy_de.vil` in the Vial GUI or at <https://vial.rocks>, then *File → Save current layout*
 back over this file. The firmware keeps the stock UID so that the `.vil` loads onto stock Vial
@@ -43,6 +43,40 @@ Since there is a custom build anyway, this is the place for further small compil
   pair.** vial-qmk still has the `process_key_override.c` bug from
   [qmk_userspace_iris_cozy_keymap#14](https://github.com/matey-jack/qmk_userspace_iris_cozy_keymap/issues/14),
   and splitting them works around it in data alone.
+
+## Settings
+
+The `settings` object of the `.vil`, keyed by qsid (Vial's QMK setting id). The names are the
+firmware's, from `quantum/qmk_settings.c`. Only the two in bold differ from QMK's defaults.
+
+| qsid   | Name                                  | Value                  |
+|--------|---------------------------------------|------------------------|
+| 1      | `grave_esc_override`                  | 0 (no overrides)       |
+| 2      | `combo_term`                          | 50 ms                  |
+| 3      | `auto_shift`                          | 0 (Auto Shift off)     |
+| 4      | `auto_shift_timeout`                  | 175 ms                 |
+| 5      | `osk_tap_toggle`                      | 5 taps                 |
+| 6      | `osk_timeout`                         | 5000 ms                |
+| **7**  | **`tapping_term`**                    | **500 ms**             |
+| 9      | `mousekey_delay`                      | 10 ms                  |
+| 10     | `mousekey_interval`                   | 20 ms                  |
+| 11     | `mousekey_move_delta`                 | 8                      |
+| 12     | `mousekey_max_speed`                  | 10                     |
+| 13     | `mousekey_time_to_max`                | 30                     |
+| 14     | `mousekey_wheel_delay`                | 10 ms                  |
+| 15     | `mousekey_wheel_interval`             | 80 ms                  |
+| 16     | `mousekey_wheel_max_speed`            | 8                      |
+| 17     | `mousekey_wheel_time_to_max`          | 40                     |
+| 18     | `tap_code_delay`                      | 0 ms                   |
+| 19     | `tap_hold_caps_delay`                 | 80 ms                  |
+| 20     | `tapping_toggle`                      | 5 taps                 |
+| 21     | `magic_settings` (bit field)          | 0 (no swaps, NKRO off) |
+| **22** | **`tapping_v2`: permissive hold**     | **1 (on)**             |
+| 23     | `tapping_v2`: hold on other key press | 0 (off)                |
+| 24     | `tapping_v2`: retro tapping           | 0 (off)                |
+| 25     | `quick_tap_term`                      | 200 ms                 |
+| 26     | `tapping_v2`: chordal hold            | 0 (off)                |
+| 27     | `flow_tap_term`                       | 0 (off)                |
 
 ## Flashing and loading
 
