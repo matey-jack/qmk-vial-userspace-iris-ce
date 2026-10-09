@@ -103,6 +103,8 @@ jobs:
           draft: false
           prerelease: false
           fail_on_unmatched_files: false
+          # GitHub appends the merged PRs since the previous release to `body`.
+          generate_release_notes: true
           body: |
             Vial firmware for `keebio/iris_ce/rev1` and `keebart/sofle_choc_pro`,
             built from ${{ github.repository }}@${{ github.sha }}
