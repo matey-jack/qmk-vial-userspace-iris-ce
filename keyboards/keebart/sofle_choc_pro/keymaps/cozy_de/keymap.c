@@ -1,5 +1,5 @@
 // The layers of `init_vial/sofle/cozy_de.vil`, compiled in as the defaults Vial starts from.
-// Macros, key overrides, the combo and the settings live only in the .vil.
+// See `init_vial/sofle/README.md` for how the two fit together.
 
 #include QMK_KEYBOARD_H
 #include "keymap_german.h"
