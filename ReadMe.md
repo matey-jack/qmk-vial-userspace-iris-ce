@@ -3,7 +3,7 @@
 This repo only exists to run a GitHub Actions flow for building QMK-VIAL, cloned
 from `git@github.com:vial-kb/vial-qmk.git`.
 
-The build targets are keebio/iris_ce and keebart/sofle_choc_pro.
+The build targets are keebio/iris_ce and keebart/sofle_choc_pro. Currently, I only really use this for the Sofle. 
 
 It is a [QMK external userspace][userspace]: the firmware sources live in
 vial-qmk, this repo only carries the build targets (`qmk.json`) and any keymaps
