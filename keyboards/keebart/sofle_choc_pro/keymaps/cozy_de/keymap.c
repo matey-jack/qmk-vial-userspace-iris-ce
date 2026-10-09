@@ -68,9 +68,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [L_FN] = LAYOUT_split_4x6_5(
         KC_NO  , KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5  ,                       KC_F6  , KC_F7  , KC_F8  , KC_F9  , KC_F10 , EE_CLR ,
         KC_NO  , KC_F11 , KC_F12 , G(C(KC_LEFT)), G(C(KC_RGHT)), KC_NO,             RM_TOGG, RM_HUED, RM_SPDD, RM_SATD, RM_VALD, QK_BOOT,
-        OS_LSFT, KC_MPRV, G(S(KC_S)), KC_NO, KC_NO , C(KC_E),                       RM_NEXT, RM_HUEU, RM_SPDU, RM_SATU, RM_VALU, OS_RSFT,
-        OS_LCTL, QK_BOOT, KC_NO  , KC_NO  , KC_NO  , KC_NO  , OS_LGUI,     OS_RGUI, KC_MSTP, KC_MPLY, KC_VOLD, KC_VOLU, KC_MUTE, KC_NO  ,
-                          KC_NO  , KC_NO  , OS_LALT, OS_RALT, KC_NO  ,     KC_NO  , OS_RALT, OS_RCTL, KC_NO  , KC_NO
+        OSM(MOD_LSFT), KC_MPRV, G(S(KC_S)), KC_NO, KC_NO, C(KC_E),                  RM_NEXT, RM_HUEU, RM_SPDU, RM_SATU, RM_VALU, OSM(MOD_RSFT),
+        OSM(MOD_LCTL), QK_BOOT, KC_NO  , KC_NO  , KC_NO  , KC_NO  , OSM(MOD_LGUI),     OSM(MOD_RGUI), KC_MSTP, KC_MPLY, KC_VOLD, KC_VOLU, KC_MUTE, KC_NO  ,
+                          KC_NO  , KC_NO  , OSM(MOD_LALT), OSM(MOD_RALT), KC_NO,    KC_NO  , OSM(MOD_RALT), OSM(MOD_RCTL), KC_NO  , KC_NO
     ),
 };
 
