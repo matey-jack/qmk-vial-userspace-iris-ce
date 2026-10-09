@@ -72,12 +72,11 @@ dances, 32 combos, 32 key overrides and 32 alt-repeat keys
 (<https://github.com/vial-kb/vial-qmk/blob/vial/quantum/vial.h>). The Sofle Choc Pro is RP2040
 with flash-backed EEPROM, so it is in that bracket.
 
-| Resource | Sofle Choc Pro, stock Vial | `cozy_de` needs | Fits |
-| --- | --- | --- | --- |
-| Layers (`DYNAMIC_KEYMAP_LAYER_COUNT`) | **10** | 4 | with six to spare |
-| Key override slots | 32 | 13 | yes |
-| Macro slots | 16 | 9 | yes |
-| Combo slots | 32 | 1 | yes |
+| Resource                              | Sofle Choc Pro, stock Vial | `cozy_de` needs | Fits              |
+|---------------------------------------|----------------------------|-----------------|-------------------|
+| Layers (`DYNAMIC_KEYMAP_LAYER_COUNT`) | **10**                     | 4               | with six to spare |
+| Key override slots                    | 32                         | 13              | yes               |
+| Macro slots                           | 16                         | 9               | yes               |
 
 The layer count is the one line where this board is plainly better off than the Iris CE. There
 the stock Vial keymap takes `dynamic_keymap.h`'s default of 4
@@ -98,15 +97,15 @@ and
 (`LAYOUT` and `LAYOUT_split_4x6_5` respectively), cross-checked against each keymap's `vial.json`,
 which lists the same cells in visual order.
 
-| Physical row | Left half | Right half | Same on both? |
-| --- | --- | --- | --- |
-| 1 (numbers) | `0,0` … `0,5` | `5,5` … `5,0` | yes |
-| 2 | `1,0` … `1,5` | `6,5` … `6,0` | yes |
-| 3 | `2,0` … `2,5` | `7,5` … `7,0` | yes |
-| 4 | `3,0` … `3,5` | `8,5` … `8,0` | yes |
-| inner | `4,5` | `9,5` | same cell, see below |
-| thumbs | `4,2` `4,3` `4,4` | `9,4` `9,3` `9,2` | yes |
-| **extra thumbs** | `4,0` `4,1` | `9,1` `9,0` | **Sofle only** |
+| Physical row     | Left half         | Right half        | Same on both?        |
+|------------------|-------------------|-------------------|----------------------|
+| 1 (numbers)      | `0,0` … `0,5`     | `5,5` … `5,0`     | yes                  |
+| 2                | `1,0` … `1,5`     | `6,5` … `6,0`     | yes                  |
+| 3                | `2,0` … `2,5`     | `7,5` … `7,0`     | yes                  |
+| 4                | `3,0` … `3,5`     | `8,5` … `8,0`     | yes                  |
+| inner            | `4,5`             | `9,5`             | same cell, see below |
+| thumbs           | `4,2` `4,3` `4,4` | `9,4` `9,3` `9,2` | yes                  |
+| **extra thumbs** | `4,0` `4,1`       | `9,1` `9,0`       | **Sofle only**       |
 
 So the conversion is not a re-mapping at all: **every cell of the Iris CE `.vil` keeps its
 address**, and the four cells the Iris CE writes as `-1` ("no such key") become real keys here.
@@ -197,16 +196,15 @@ Everything that is about the keymap rather than the board. In short, and with th
   transfers; this board runs the same `vial-qmk`, so it needs it just as much.
 - **The nine macros** `M0`…`M8`, each a dead key (or E1's Level-5 latch) plus one more key with a
   10 ms gap.
-- **The Caps Word combo** `KC_LSFT + KC_RSFT → CW_TOGG`, standing in for
-  `BOTH_SHIFTS_TURNS_ON_CAPS_WORD`, which is not one of Vial's runtime settings.
 - **The two tap-hold settings**, in the `.vil`'s `settings` block: qsid 7 (`TAPPING_TERM`, 500) and
   qsid 22 (`PERMISSIVE_HOLD`, true) (<https://github.com/vial-kb/vial-qmk/blob/vial/quantum/qmk_settings.h>).
 
 ## 5. What is lost
 
 The same four things as on the Iris CE, for the same reasons, and none of them is a character you
-can no longer type: the exact both-shifts Caps Word behaviour, the modifier-clearing in
-`send_prefixed_key()`, the `MX_VERS` version key, and `ENABLE_RGB_MATRIX_KEY_GROUPS`. The fifth
+can no longer type: Caps Word on both Shifts (`BOTH_SHIFTS_TURNS_ON_CAPS_WORD` is not one of
+Vial's runtime settings, and a `KC_LSFT + KC_RSFT` combo does not work, so it is a `CW_TOGG`
+key), the modifier-clearing in `send_prefixed_key()`, the `MX_VERS` version key, and `ENABLE_RGB_MATRIX_KEY_GROUPS`. The fifth
 item on that list — *no headroom for a fifth layer* — does **not** apply here, see §1.
 
 ---
@@ -253,7 +251,7 @@ the original generator was not kept: the conversion happens once.
    `src/commands/load.rs`), so nothing else needs setting.
 5. Test pass, against the README's list: the Shift mapping of the number row, the ä/Tab chameleon
    under Ctrl/Alt/Gui, the five accent macros, ^ and `, the Level-5 items (¢ £ and `DE_LVL5`
-   itself), Caps Word via the combo, and the 500 ms tapping term on the four `LT()` keys.
+   itself), Caps Word via its key, and the 500 ms tapping term on the four `LT()` keys.
 6. Then the Sofle-specific checks: the four outer thumb keys and both encoders do nothing, and
    `KC_LGUI` / `G(KC_TAB)` are where §2 says they are.
 

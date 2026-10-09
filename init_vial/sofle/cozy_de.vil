@@ -1843,11 +1843,11 @@
   ],
   "combo": [
     [
-      "KC_LSHIFT",
-      "KC_RSHIFT",
       "KC_NO",
       "KC_NO",
-      "QK_CAPS_WORD_TOGGLE"
+      "KC_NO",
+      "KC_NO",
+      "KC_NO"
     ],
     [
       "KC_NO",

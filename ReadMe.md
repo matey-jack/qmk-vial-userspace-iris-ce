@@ -49,10 +49,11 @@ Note that vial-qmk expects the **tuple** form `["keyboard", "keymap"]` here.
 Current upstream QMK also accepts `{"keyboard": ..., "keymap": ...}`, but
 vial-qmk's userspace schema predates that and will reject it.
 
-Both boards also carry a keyboard-level `config.h` under
-`keyboards/<keyboard>/` (overlaid onto vial-qmk's own) that defines
-`BOTH_SHIFTS_TURNS_ON_CAPS_WORD`, so pressing both Shift keys together toggles
-Caps Word (a mode that capitalises a word and then switches itself off).
+The Sofle's `cozy_de` keymap defines `BOTH_SHIFTS_TURNS_ON_CAPS_WORD` in its
+`config.h`, so pressing both Shift keys together toggles Caps Word (a mode that
+capitalises a word and then switches itself off). It has to sit in the keymap
+folder: QMK reads a userspace `config.h` only from there, never from
+`keyboards/<keyboard>/`.
 This seems to be the only option I need and that is not already set in VIAL's defaults 
 or settable instantly by the VIAL UI. (See below about `.vil` files.) 
 
