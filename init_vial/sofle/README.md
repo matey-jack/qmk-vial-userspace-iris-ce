@@ -6,7 +6,7 @@ Files that put the `cozy_de` keymap on a **Keebart Sofle Choc Pro** running an u
 | File | What it is |
 | --- | --- |
 | [`PLAN.md`](PLAN.md) | why this works, what changed against the Iris CE version, and every claim sourced |
-| `cozy_de.vil` | the keymap itself: 4 layers (of 10), 9 macros, 13 key overrides, 1 combo |
+| `cozy_de.vil` | the keymap itself: 4 layers (of 10), 9 macros, 13 key overrides |
 
 `cozy_de.vil` is the Iris CE file from
 [`qmk_userspace_iris_cozy_keymap#12`](https://github.com/matey-jack/qmk_userspace_iris_cozy_keymap/pull/12),
@@ -46,7 +46,7 @@ vitaly lock -l            # optional: lock the board again
 The unlock step is needed because Vial refuses to write macros while the keyboard is locked, and
 `cozy_de.vil` has nine. The unlock keys are the two outer keys of the top row (Esc and Backspace).
 
-That one `load` writes everything: layers, macros, key overrides, the combo and the `settings`
+That one `load` writes everything: layers, macros, key overrides and the `settings`
 block (tapping term 500 ms, permissive hold). Add `-i 0` if more than one Vial keyboard is
 connected. `vitaly load -f cozy_de.vil -p` previews without writing.
 
@@ -73,13 +73,12 @@ place on the board.
 
 ## What differs from the compiled keymap
 
-Four deliberate differences, inherited unchanged from the Iris CE version — §4 and §5 of
-`PLAN.md` have the reasoning:
+Four deliberate differences — §4 and §5 of `PLAN.md` have the reasoning:
 
-- **Caps Word** is a `KC_LSFT + KC_RSFT → CW_TOGG` combo instead of
-  `BOTH_SHIFTS_TURNS_ON_CAPS_WORD`, which stock Vial has no runtime switch for. It *toggles*, so
-  both Shifts again turns it off, and stock Vial compiles in `CAPS_WORD_INVERT_ON_SHIFT`, so
-  Shift inside Caps Word gives a lowercase letter.
+- **Caps Word** is the `CW_TOGG` key at matrix `9,5`, not both Shifts:
+  `BOTH_SHIFTS_TURNS_ON_CAPS_WORD` is compile-time only, and a `KC_LSFT + KC_RSFT` combo does not
+  work. Stock Vial compiles in `CAPS_WORD_INVERT_ON_SHIFT`, so Shift inside Caps Word gives a
+  lowercase letter.
 - **The accent macros do not clear modifiers.** `send_prefixed_key()` did; a Vial macro cannot.
   Hold Shift while pressing the é key and you get è, because ´ and ` share a key on the German
   layout. They are minuscule-only macros, so this only bites when you were already off-script.
