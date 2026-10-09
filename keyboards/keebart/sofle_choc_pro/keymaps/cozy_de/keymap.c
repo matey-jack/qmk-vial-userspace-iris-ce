@@ -39,13 +39,17 @@ enum layer_names {
 #define L2_INS  LT(L_ALTGR, KC_INS)
 #define L3_ESC  LT(L_FN, KC_ESC)
 
+// Win+Tab (task view) on tap, Win on hold. MT() cannot take a modified tap keycode,
+// so the tap is sent in process_record_user() below.
+#define MC_WINT MT(MOD_RGUI, KC_TAB)
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [L_BASE] = LAYOUT_split_4x6_5(
         L3_ESC , KC_1   , KC_2   , KC_3   , KC_4   , KC_5   ,                       KC_6   , KC_7   , KC_8   , KC_9   , KC_0   , KC_BSPC,
         DE_ADIA, KC_Q   , KC_W   , KC_B   , KC_F   , DE_ODIA,                       DE_Z   , KC_K   , KC_U   , KC_O   , KC_P   , DE_UDIA,
         KC_LSFT, KC_A   , KC_S   , KC_D   , KC_R   , KC_G   ,                       KC_H   , KC_N   , KC_I   , KC_L   , KC_T   , KC_RSFT,
         KC_LCTL, L2_Y   , KC_X   , KC_C   , KC_V   , DE_QUOT, KC_LGUI,     CW_TOGG, KC_J   , KC_M   , DE_COMM, DE_DOT , L2_MINS, KC_ENT ,
-                          KC_PGUP, KC_PGDN, KC_LALT, L2_DEL , KC_SPC ,     KC_E   , L2_INS , G(KC_TAB), MO(L_FN), KC_RCTL
+                          KC_PGUP, KC_PGDN, KC_LALT, L2_DEL , KC_SPC ,     KC_E   , L2_INS , MC_WINT, MO(L_FN), KC_RCTL
     ),
     [L_COMBINE] = LAYOUT_split_4x6_5(
         TO(0)  , KC_NO  , KC_NO  , DE_SECT, DE_DCED, DE_DSTR,                       DE_CIRC, DE_DDIA, DE_ACUT, DE_GRV , DE_DTIL, TO(0)  ,
@@ -75,3 +79,11 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [L_BASE] = {ENCODER_CCW_CW(KC_NO, KC_NO), ENCODER_CCW_CW(KC_NO, KC_NO)},
 };
 #endif
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == MC_WINT && record->tap.count && record->event.pressed) {
+        tap_code16(RWIN(KC_TAB));
+        return false;
+    }
+    return true;
+}

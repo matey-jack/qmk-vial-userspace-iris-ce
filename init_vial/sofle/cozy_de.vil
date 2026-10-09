@@ -78,7 +78,7 @@
       [
         "KC_RCTRL",
         "MO(3)",
-        "LGUI(KC_TAB)",
+        "RGUI_T(KC_TAB)",
         "LT2(KC_INSERT)",
         "KC_E",
         "QK_CAPS_WORD_TOGGLE"

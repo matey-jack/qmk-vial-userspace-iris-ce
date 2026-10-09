@@ -18,6 +18,9 @@ Only what Vial has no runtime switch for:
 
 - **`BOTH_SHIFTS_TURNS_ON_CAPS_WORD`** in `config.h`. Vial cannot do this at runtime, and a
   `KC_LSFT + KC_RSFT` combo does not work.
+- **The Win+Tab tap of `MC_WINT`** in `process_record_user()`. The `.vil` stores that key as a
+  plain `RGUI_T(KC_TAB)`, which the firmware turns into Win+Tab on tap and Win on hold. On stock
+  Vial firmware the same key taps a plain Tab.
 - **The `.vil`'s layers as `keymap.c` defaults**, so the board is usable straight after
   flashing. They are a copy, so when the layers in the `.vil` change, `keymap.c` should follow.
 
