@@ -38,44 +38,22 @@ that is all there is to it.
 
 ## Build targets
 
-`qmk.json` currently builds the stock Vial keymap for both boards:
+`qmk.json` lists the build targets. Note that vial-qmk expects the **tuple** form
+`["keyboard", "keymap"]` there. Current upstream QMK also accepts
+`{"keyboard": ..., "keymap": ...}`, but vial-qmk's userspace schema predates
+that and will reject it.
 
-```json
-["keebio/iris_ce/rev1", "vial"],
-["keebart/sofle_choc_pro", "vial"]
-```
+A keymap of our own lives in `keyboards/<keyboard>/keymaps/<name>/`, as
+`{keymap.c,config.h,rules.mk,vial.json}`. QMK reads a userspace `config.h` only
+from there, never from `keyboards/<keyboard>/`. A Vial keymap needs
+`VIAL_ENABLE = yes` in `rules.mk`, its own `vial.json`, and a
+`VIAL_KEYBOARD_UID` in `config.h`; start from the stock one in vial-qmk's
+`keyboards/<keyboard>/keymaps/vial/`.
 
-Note that vial-qmk expects the **tuple** form `["keyboard", "keymap"]` here.
-Current upstream QMK also accepts `{"keyboard": ..., "keymap": ...}`, but
-vial-qmk's userspace schema predates that and will reject it.
+## The Sofle's `cozy_de` keymap
 
-The Sofle's `cozy_de` keymap defines `BOTH_SHIFTS_TURNS_ON_CAPS_WORD` in its
-`config.h`, so pressing both Shift keys together toggles Caps Word (a mode that
-capitalises a word and then switches itself off). It has to sit in the keymap
-folder: QMK reads a userspace `config.h` only from there, never from
-`keyboards/<keyboard>/`.
-This seems to be the only option I need and that is not already set in VIAL's defaults 
-or settable instantly by the VIAL UI. (See below about `.vil` files.) 
-
-To customise the keymap, copy the stock one out of vial-qmk into this repo and
-point the build target at it:
-
-```
-keyboards/keebio/iris_ce/keymaps/<name>/{keymap.c,config.h,rules.mk,vial.json}
-```
-
-A Vial keymap needs `VIAL_ENABLE = yes` in `rules.mk`, its own `vial.json`, and
-a `VIAL_KEYBOARD_UID` in `config.h` — generate a fresh one with
-`python3 util/vial_generate_keyboard_uid.py` from a vial-qmk checkout.
-
-## Loading a keymap instead of compiling one
-
-There is a second way to get a custom keymap onto a board: flash the stock Vial firmware above
-and then write the keymap into its EEPROM over USB, so there is no per-keymap build at all.
-
-[`init_vial/sofle/`](init_vial/sofle/) does that for the Sofle Choc Pro with the `cozy_de`
-keymap — a `.vil` layout file that a single `vitaly load` writes to the board (settings
-included), and a plan documenting what transfers and what does not.
+[`init_vial/sofle/`](init_vial/sofle/) explains how it is split between a
+small custom firmware and a Vial `.vil` file that is loaded over USB.
 
 ## Building locally
 
